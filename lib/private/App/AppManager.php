@@ -160,9 +160,9 @@ class AppManager implements IAppManager {
 	 */
 	public function getEnabledAppsForUser(IUser $user = null) {
 		$apps = $this->getInstalledAppsValues();
-		$appsForUser = \array_filter($apps, function ($enabled) use ($user) {
-			return $this->checkAppForUser($enabled, $user);
-		});
+		$appsForUser = \array_filter($apps, function ($enabled, $appName) use ($user) {
+			return $this->checkAppForUser($enabled, $appName, $user);
+		}, ARRAY_FILTER_USE_BOTH);
 		return \array_keys($appsForUser);
 	}
 
@@ -182,7 +182,7 @@ class AppManager implements IAppManager {
 		}
 		$installedApps = $this->getInstalledAppsValues();
 		if (isset($installedApps[$appId])) {
-			return $this->checkAppForUser($installedApps[$appId], $user);
+			return $this->checkAppForUser($installedApps[$appId], $appId, $user);
 		} else {
 			return false;
 		}
@@ -191,9 +191,23 @@ class AppManager implements IAppManager {
 	/**
 	 * @param string $enabled
 	 * @param IUser $user
+	 * @param string $appName
 	 * @return bool
 	 */
-	private function checkAppForUser($enabled, $user) {
+	private function checkAppForUser($enabled, $appName, $user) {
+		if ($user !== null) {
+			$userAppAttributes = $user->getExtendedAttributes();
+			/**
+			 * Check if the user is guest user, if so get the apps which it is allowed for.
+			 */
+			if (\array_key_exists('guests', $userAppAttributes)) {
+				$whiteListedAppsForGuest = $userAppAttributes['guests']['whiteListedApps'];
+				if (\count($whiteListedAppsForGuest) > 0 && !\in_array($appName, $whiteListedAppsForGuest)) {
+					return false;
+				}
+			}
+		}
+
 		if ($enabled === 'yes') {
 			return true;
 		} elseif ($user === null) {

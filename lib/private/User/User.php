@@ -44,6 +44,7 @@ use OCP\IUserBackend;
 use OCP\IUserSession;
 use OCP\PreConditionNotMetException;
 use OCP\User\IChangePasswordBackend;
+use OCP\User\UserExtendedAttributesEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -554,5 +555,24 @@ class User implements IUser {
 	 */
 	public function getAccountId() {
 		return $this->account->getId();
+	}
+
+	/**
+	 * get the attributes of user for apps
+	 *
+	 * @return array
+	 * @since 10.3.1
+	 */
+	public function getExtendedAttributes() {
+		if ($this->eventDispatcher === null) {
+			$this->eventDispatcher = \OC::$server->getEventDispatcher();
+		}
+
+		$userExtendedAttributeEvent = new UserExtendedAttributesEvent(
+			UserExtendedAttributesEvent::USER_EXTENDED_ATTRIBUTES,
+			[]);
+		$this->eventDispatcher->dispatch(UserExtendedAttributesEvent::USER_EXTENDED_ATTRIBUTES, $userExtendedAttributeEvent);
+
+		return  $userExtendedAttributeEvent->getAttributes();
 	}
 }
