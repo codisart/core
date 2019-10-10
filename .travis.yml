@@ -2,6 +2,8 @@ sudo: false
 language: php
 php:
   - 7.2
+  - 7.3
+  - 7.4
 
 cache:
   directories:
@@ -22,6 +24,8 @@ env:
 branches:
   only:
     - master
+    - test-php-7.3
+    - /^stable\d+(\.\d+)?$/
 
 addons:
   apt: &common_apt
@@ -33,6 +37,7 @@ addons:
     - owncloud
 
 before_install:
+  - nvm install --lts
   - make
   - sh -c "if [ '$TEST_DAV' = '1' ] || [ '$TC' = 'selenium' ]; then bash tests/travis/before_install.sh $DB; fi"
 
